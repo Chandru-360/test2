@@ -1,1 +1,164 @@
 https://vengat.notion.site/Cloning-Git-Repo-to-AWS-S3-using-Shell-Script-12f524c9a46480fc90e9c223f32c61e8?pvs=4
+# Welcome Note!
+
+HI, In this project, we will see how to automatically clone a Git repository from an EC2 instance and host the files in AWS S3 using a shell script. We can use shell scripting to automate this process, making it faster and more efficient.
+
+### Prerequisites
+
+1. An **AWS Account** to create an S3 bucket and EC2 instance.
+2. **Git** must be installed on your system.
+3. **Access to an S3 bucket**: Ensure you have the necessary permissions to upload to the target S3 bucket.
+4. A **GitHub account**.
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4fc0cb1-2229-4055-9f27-5f150c824b3d/7cf1170f-6eff-4002-b266-156efee7565e/image.png)
+
+### Project Overview
+
+You will:
+
+1. **Create an EC2 instance** on AWS that will run your shell script.
+2. **Use the EC2 instance** to clone your GitHub repository.
+3. **Upload the cloned repository's contents** to an S3 bucket from the EC2 instance
+
+
+# S3 Upload Automation Script
+
+[Code Docs](https://www.notion.so/12f524c9a4648165a949ea92f1e3a7a5?pvs=21)
+
+[Cloning Git Repo to AWS S3 using Shell Script ](https://www.notion.so/Cloning-Git-Repo-to-AWS-S3-using-Shell-Script-12f524c9a46480fc90e9c223f32c61e8?pvs=21)
+
+## Step-1
+
+- Create an **EC2 instance** in AWS and log in to it.
+- Update your EC2 instance by running the following commands to install Git
+
+```bash
+yum update -y
+yum install git -y
+```
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4fc0cb1-2229-4055-9f27-5f150c824b3d/66cb11c6-bb65-42ae-87db-2c195081b2c1/image.png)
+
+## Step-2
+
+- Next, you need to assign **S3 access** to your EC2 instance.
+- There are two ways to do this:
+    1. **Create an IAM user**: You can create an IAM user, assign a policy to that user, and configure it in the EC2 instance.
+    2. **Assign a role**: You can assign a role to the EC2 instance, which will give the entire instance access to S3.
+- I will use the second method here.
+- Go to the **AWS Management Console**, search for **IAM**, and click on **Roles**.
+- Click on **Create Role**.
+- Select **AWS Service**, choose **EC2**, give your role a name, add permissions for **S3 Full Access**, and then click **Create Role**.
+    
+    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4fc0cb1-2229-4055-9f27-5f150c824b3d/31fd7857-a84b-4193-8878-b811a651ea54/image.png)
+    
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4fc0cb1-2229-4055-9f27-5f150c824b3d/0a88737b-f093-466e-b94a-d2ec68b9f986/image.png)
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4fc0cb1-2229-4055-9f27-5f150c824b3d/13063287-3d8a-4e29-92ce-2064e422d9ce/image.png)
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4fc0cb1-2229-4055-9f27-5f150c824b3d/e6fb76c7-eb04-4ffb-9b17-328f231b628d/image.png)
+
+## Step-3
+
+- Next, assign the role to your EC2 instance.
+- Go to **EC2** in the console and select your EC2 instance.
+- Click on **Actions** > **Security** > **Modify IAM Role**.
+- Select the created role from the dropdown menu and click **Update IAM Role**.
+    
+    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4fc0cb1-2229-4055-9f27-5f150c824b3d/331e7430-c55c-4226-b55f-73c3ae98ddc0/image.png)
+    
+    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4fc0cb1-2229-4055-9f27-5f150c824b3d/28595b09-bf89-4e07-8741-c26fe2f24f00/image.png)
+    
+    ## Step-4
+    
+    - Next, create an S3 bucket in AWS. Search for **S3** in the console, click **Create Bucket**, and give it a name. You can leave the rest of the settings as default.
+    - Uncheck **Block all public access** and click on **Create Bucket** to create the bucket.
+    - After creating the bucket, go to your EC2 instance and check if the S3 role is assigned properly by running the command `aws s3 ls`. This command will show the list of buckets.
+    
+    ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4fc0cb1-2229-4055-9f27-5f150c824b3d/13e3b0c7-edcf-487f-ba92-e34a82943cfd/Untitled.png)
+    
+    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4fc0cb1-2229-4055-9f27-5f150c824b3d/21c5ebe4-c90e-41c1-b4a3-373c7671ec82/image.png)
+    
+    ## Step-4
+    
+    - Now, we need to connect GitHub to our EC2 instance by generating an SSH key.Run the following command to generate the SSH key:
+    
+    ```bash
+    bash
+    Copy code
+    ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+    #Replace "your_email@example.com" with your actual email address.
+    
+    ```
+    
+    - Press Enter to save the key. To check the keys, run `ls -l /root/.ssh`, and to see your public key, use `cat /root/.ssh/id_rsa.pub`.
+    
+    ```bash
+    ls -l /root/.ssh
+    cat /root/.ssh/id_rsa.pub
+    ```
+    
+    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4fc0cb1-2229-4055-9f27-5f150c824b3d/3271607b-bcb5-43d8-b26e-01960b347c92/image.png)
+    
+    ## Step-5
+    
+    - Go to your GitHub account, click on **Settings**, and select **New SSH key**.
+    - Paste the key you copied from EC2.
+    
+    ***(Note:Make sure to specify which repository in Github you want to upload to S3)***
+    
+    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4fc0cb1-2229-4055-9f27-5f150c824b3d/8fc7d0fb-4a05-4045-8aaf-8ea01bb79729/image.png)
+    
+    ## Step-6
+    
+    - Now, we need to create a script to automate cloning the repository and uploading to S3.
+    - Below is the script code to execute this.
+    - **Important**: After creating the file, you need to give it executable permissions using `chmod +x <filename>` for it to run.
+        
+        ```jsx
+        #!/bin/bash
+        
+        # Variables
+        GIT_REPO_URL="git@github.com:Vengatesh-Bala/Falcon-Fighters.git"  # Replace with your GitHub repo link
+        S3_BUCKET_NAME="bucket-script-ec2" # Replace with your bucket name
+        LOCAL_DIR="/tmp/Falcon-Fighters" # Temporary directory for cloned repo (will be deleted after upload)
+        
+        # Step 1: Clone the Git Repository
+        echo "Cloning the repository from $GIT_REPO_URL ..."
+        if [ -d "$LOCAL_DIR" ]; then
+          rm -rf "$LOCAL_DIR"  # Remove the existing directory if it exists
+        fi
+        
+        git clone "$GIT_REPO_URL" "$LOCAL_DIR"
+        
+        if [ $? -ne 0 ]; then
+          echo "Error: Failed to clone the Git repository."
+          exit 1
+        fi
+        
+        echo "Successfully cloned the repository."
+        
+        # Step 2: Upload Files to S3
+        echo "Uploading files to S3 bucket $S3_BUCKET_NAME ..."
+        aws s3 cp "$LOCAL_DIR" "s3://$S3_BUCKET_NAME/" --recursive
+        
+        if [ $? -ne 0 ]; then
+          echo "Error: Failed to upload files to S3."
+          exit 1
+        fi
+        
+        echo "Successfully uploaded files to S3 bucket $S3_BUCKET_NAME."
+        
+        # Clean up
+        rm -rf "$LOCAL_DIR"
+        echo "Deleted the local repository."
+        
+        ```
+        
+        ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/b4fc0cb1-2229-4055-9f27-5f150c824b3d/41eea40a-a1ed-4d53-9fdc-3305748de713/image.png)
+        
+        ## Step-7
+        
+        - Run the script using `./filename`.
+        - You should see that the files are uploaded to your S3 bucket.
